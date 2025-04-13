@@ -1,155 +1,105 @@
+-- UI Library for Roblox (Cleaner Version)
 local UI_Lib = {}
 
-local TweenService = game:GetService("TweenService")
-local player = game.Players.LocalPlayer
-local PlayerGui = player:WaitForChild("PlayerGui")
-
--- Utility function to create UI elements
-local function CreateElement(className, properties)
-    local element = Instance.new(className)
-    for prop, value in pairs(properties) do
-        element[prop] = value
+-- Helper function to create a new UI component
+function UI_Lib:CreateElement(parent, class, properties)
+    local element = Instance.new(class)
+    for property, value in pairs(properties) do
+        element[property] = value
     end
+    element.Parent = parent
     return element
 end
 
--- Create a basic UI frame with a tab system
-function UI_Lib:CreateWindow(title)
-    local window = CreateElement("ScreenGui", {
-        Parent = PlayerGui,
-        ResetOnSpawn = false
+-- Create a Window
+function UI_Lib:CreateWindow(title, width, height)
+    -- Create the main window
+    local window = self:CreateElement(game.Players.LocalPlayer.PlayerGui, "ScreenGui", {
+        Name = title
     })
-    
-    local frame = CreateElement("Frame", {
-        Parent = window,
-        Size = UDim2.new(0, 500, 0, 300),
-        Position = UDim2.new(0.5, -250, 0.5, -150),
-        BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+
+    local frame = self:CreateElement(window, "Frame", {
+        Size = UDim2.new(0, width, 0, height),
+        Position = UDim2.new(0.5, -width/2, 0.5, -height/2),
+        BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+        BorderSizePixel = 0,
+        CornerRadius = UDim.new(0, 10)
     })
-    
-    local titleLabel = CreateElement("TextLabel", {
-        Parent = frame,
+
+    -- Title Bar
+    local titleBar = self:CreateElement(frame, "TextLabel", {
         Size = UDim2.new(1, 0, 0, 30),
-        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 0, 0, 0),
         Text = title,
+        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
         TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 20,
-        Font = Enum.Font.Gotham
+        TextSize = 18,
+        TextStrokeTransparency = 0.8,
+        TextBold = true
     })
-    
+
     return window, frame
 end
 
--- Create a tab button
-function UI_Lib:CreateTabButton(tabContainer, title, callback)
-    local button = CreateElement("TextButton", {
-        Parent = tabContainer,
-        Size = UDim2.new(0, 100, 0, 30),
-        BackgroundColor3 = Color3.fromRGB(45, 45, 45),
-        Text = title,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.Gotham,
-        TextSize = 16
-    })
-
-    local UICorner = CreateElement("UICorner", {Parent = button})
-    UICorner.CornerRadius = UDim.new(0, 8)
-
-    button.MouseButton1Click:Connect(function()
-        callback()
-    end)
-
-    return button
-end
-
--- Create the content frame that will show on tab switch
-function UI_Lib:CreateTabContent(parent)
-    local contentFrame = CreateElement("Frame", {
-        Parent = parent,
-        Size = UDim2.new(1, 0, 1, -40),
-        Position = UDim2.new(0, 0, 0, 40),
-        BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    })
-
-    return contentFrame
-end
-
--- Create a button inside a tab's content
-function UI_Lib:CreateButton(parent, title, callback)
-    local button = CreateElement("TextButton", {
-        Parent = parent,
+-- Create a Button
+function UI_Lib:CreateButton(parent, label, callback)
+    local button = self:CreateElement(parent, "TextButton", {
         Size = UDim2.new(0, 180, 0, 40),
-        BackgroundColor3 = Color3.fromRGB(50, 150, 50),
-        Text = title,
+        Position = UDim2.new(0.5, -90, 0.5, 40),
+        Text = label,
+        BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 16,
+        BorderSizePixel = 2,
+        BorderColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBold,
+        TextStrokeTransparency = 0.8
+    })
+    button.MouseButton1Click:Connect(callback)
+    return button
+end
+
+-- Create a Close Button
+function UI_Lib:CreateCloseButton(window)
+    local closeButton = self:CreateElement(window, "TextButton", {
+        Size = UDim2.new(0, 50, 0, 30),
+        Position = UDim2.new(1, -50, 0, 0),
+        Text = "X",
+        BackgroundColor3 = Color3.fromRGB(255, 0, 0),
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Font = Enum.Font.GothamBold,
         TextSize = 16
     })
-
-    local UICorner = CreateElement("UICorner", {Parent = button})
-    UICorner.CornerRadius = UDim.new(0, 8)
-
-    button.MouseButton1Click:Connect(function()
-        callback()
-    end)
-
-    return button
-end
-
--- Add a close button to the window
-function UI_Lib:CreateCloseButton(window)
-    local closeButton = CreateElement("TextButton", {
-        Parent = window,
-        Size = UDim2.new(0, 30, 0, 30),
-        Position = UDim2.new(1, -40, 0, -40),
-        BackgroundColor3 = Color3.fromRGB(150, 50, 50),
-        Text = "X",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        Font = Enum.Font.GothamBold,
-        TextSize = 20
-    })
-
-    local UICorner = CreateElement("UICorner", {Parent = closeButton})
-    UICorner.CornerRadius = UDim.new(0, 8)
-
     closeButton.MouseButton1Click:Connect(function()
         window:Destroy()
     end)
 end
 
--- Create the tabs with a container and contents
-function UI_Lib:CreateTabSystem(window, tabs)
-    local tabContainer = CreateElement("Frame", {
-        Parent = window,
-        Size = UDim2.new(0, 100, 1),
-        BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-        Position = UDim2.new(0, 0, 0, 30)
+-- Create a Minimize Button
+function UI_Lib:CreateMinimizeButton(window, frame)
+    local minimizeButton = self:CreateElement(window, "TextButton", {
+        Size = UDim2.new(0, 50, 0, 30),
+        Position = UDim2.new(1, -100, 0, 0),
+        Text = "_",
+        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.GothamBold,
+        TextSize = 16
     })
+    minimizeButton.MouseButton1Click:Connect(function()
+        frame.Visible = not frame.Visible
+    end)
+end
 
-    local contentContainer = CreateElement("Frame", {
-        Parent = window,
-        Size = UDim2.new(1, -100, 1, -30),
-        Position = UDim2.new(0, 100, 0, 30),
-        BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    })
-
-    local currentTabContent
-
-    -- Create buttons for each tab and content sections
-    for _, tab in pairs(tabs) do
-        local tabButton = UI_Lib:CreateTabButton(tabContainer, tab.title, function()
-            -- Switch the content
-            if currentTabContent then
-                currentTabContent.Visible = false
-            end
-            currentTabContent = tab.content
-            currentTabContent.Visible = true
-        end)
-
-        local tabContent = UI_Lib:CreateTabContent(contentContainer)
-        tab.content = tabContent
-        tabContent.Visible = false
-    end
+-- Add Keybind to Toggle Window Visibility
+function UI_Lib:AddKeybindToToggle(window, key)
+    local userInputService = game:GetService("UserInputService")
+    userInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.KeyCode == key then
+            window.Visible = not window.Visible
+        end
+    end)
 end
 
 return UI_Lib
